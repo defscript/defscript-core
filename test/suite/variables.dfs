@@ -1,0 +1,37 @@
+
+##test: Variable scope
+    def a = 4, b = 5
+    
+    if b == 5 do
+        def a := 6
+        def b = 9
+
+        eq(a, 6)
+        a = 3
+
+    eq(a + b, 9)
+
+##test: Variable reassign
+    def a := 4
+    
+    a = 5
+
+    eq(a, 5)
+
+    a += 7
+
+    eq(a, 12)
+
+    
+##test: Variables vs constants
+    def a = 5, b := 9
+    
+    works(() {
+        b = 9  
+    })
+    
+    throws(() {
+        a = 3
+    })
+    
+    
