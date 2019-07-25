@@ -1,0 +1,24 @@
+
+e
+    callee
+        > \id
+        > '+'
+        > '-
+        > '*'
+        > '/'
+
+    interpolation
+        > '{' code '}'  =>
+            {
+                type: 'interpolation'
+                tree: @parse($[1])
+            }
+
+    > call  =>
+        {
+            type: 'call'
+            subject
+        }
+
+    > interpolation
+    > 
