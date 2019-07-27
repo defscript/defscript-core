@@ -34,7 +34,7 @@ const __dirname = path.dirname(__filename);
             yield {
                 title,
                 run,
-                code: `\n${code}\n`,
+                code,
                 file: 'compile-only'
             }
         }

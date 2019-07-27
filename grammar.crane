@@ -356,19 +356,19 @@ module-declaration
         > \export statement.declaration =>
             new @node.ExportNamedDeclaration do
                 declaration: $[1]
-                speficiers: []
+                specifiers: []
                 source: null
 
         > \export '{' export-list '}' =>
             new @node.ExportNamedDeclaration do
                 declaration: null
-                speficiers: $[2]
+                specifiers: $[2]
                 source: null
 
         > \export '{' export-list '}' \from source =>
             new @node.ExportNamedDeclaration do
                 declaration: null
-                speficiers: $[2]
+                specifiers: $[2]
                 source: $[5]
 
         # e.g. export default someexpression
@@ -378,7 +378,7 @@ module-declaration
 
         # e.g. export * from "some/other/module"
         > \export '*' \from source =>
-            new @node.ExportAlltDeclaration do
+            new @node.ExportAllDeclaration do
                 source: $[3]
 
     > import-declaration
