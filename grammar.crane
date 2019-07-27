@@ -7,7 +7,11 @@
 %none '{' '(' '[' ']' ')' '}' '.'
 
 module
-    > @multiple(statement, sep)    =>
+    module-line
+        > statement
+        > module-declaration
+
+    > @multiple(module-line, sep)    =>
         new @node.Program do
             sourceType: 'module'
             body: $[0]
@@ -326,12 +330,12 @@ module-declaration
 
         > \import '{' import-list '}' \from source =>
             new @node.ImportDeclaration do
-                speficiers: $[2]
+                specifiers: $[2]
                 source: $[5]
 
         > \import default-specifier ',' '{' import-list '}' \from source =>
             new @node.ImportDeclaration do
-                speficiers: [$[1], ...$[4]]
+                specifiers: [$[1], ...$[4]]
                 source: $[7]
 
     export-declaration
@@ -346,19 +350,22 @@ module-declaration
                     exported: $[2]
                     local: $[0]
 
+        export-list
+            > @multiple(export-item, ',')
+
         > \export statement.declaration =>
             new @node.ExportNamedDeclaration do
                 declaration: $[1]
                 speficiers: []
                 source: null
 
-        > \export '{' @multiple(export-item, ',') '}' =>
+        > \export '{' export-list '}' =>
             new @node.ExportNamedDeclaration do
                 declaration: null
                 speficiers: $[2]
                 source: null
 
-        > \export '{' @multiple(export-item, ',') '}' \from source =>
+        > \export '{' export-list '}' \from source =>
             new @node.ExportNamedDeclaration do
                 declaration: null
                 speficiers: $[2]
@@ -373,6 +380,9 @@ module-declaration
         > \export '*' \from source =>
             new @node.ExportAlltDeclaration do
                 source: $[3]
+
+    > import-declaration
+    > export-declaration
 
 class
     class-body

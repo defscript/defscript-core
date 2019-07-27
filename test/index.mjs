@@ -1,11 +1,21 @@
 
-const vm = require('vm');
-const fs = require('fs');
-const chalk = require('chalk');
+import vm from "vm"
+import fs from "fs"
+import path from "path"
+import chalk from "chalk"
+import {tokenize, parse, compileToAST, compile} from "../lib"
+
+import compileTests from "./compile-only"
+
+const __url = import.meta.url
+const __filename =
+  (__url.startsWith('file://')) ?
+    __url.slice(7) :
+    __url ;
+
+const __dirname = path.dirname(__filename);
 
 (async () => {
-    const {tokenize, parse, compileToAST, compile, getParser} = await import('../lib');
-
     const failSymbol = chalk.red('\u2718');
     const winSymbol = chalk.green('\u2714');
 
@@ -20,6 +30,15 @@ const chalk = require('chalk');
             .readdirSync(`${__dirname}/suite`)
             .filter(name => name.endsWith('.dfs'))
         
+        for (const {title, code, run} of compileTests) {
+            yield {
+                title,
+                run,
+                code: `\n${code}\n`,
+                file: 'compile-only'
+            }
+        }
+
         for (const file of files) {
             const source = fs.readFileSync(`${__dirname}/suite/${file}`, 'utf8');
             let testCase = null;
@@ -39,7 +58,8 @@ const chalk = require('chalk');
                     testCase = {
                         file,
                         title: rawTitle.trim(),
-                        code: ''
+                        code: '',
+                        run: null
                     }
                 }
             }
@@ -50,9 +70,7 @@ const chalk = require('chalk');
     }
 
     const runtimeTest = (code) => {
-        const results = []
-        let promiseCount = 0;
-        let ran = false;
+        const details = []
         
         return new Promise((done) => {
             const context = {
@@ -72,40 +90,40 @@ const chalk = require('chalk');
                 },
 
                 eq(a, b) {
-                    results.push(a === b);
+                    details.push(a === b);
                 },
                 assert(condition) {
-                    results.push(condition);  
+                    details.push(condition);  
                 },
                 arrayEq(a, b) {
                     if (a.length !== b.length)
-                        results.push(false);
+                        details.push(false);
                     else {
                         for (let i = 0; i < a.length; i++) {
                             if (a[i] !== b[i]) {
-                                results.push(false);
+                                details.push(false);
                                 return;
                             }
                         }
 
-                        results.push(true);
+                        details.push(true);
                     }
                 },
                 throws(fn) {
                     try {
                         fn();
-                        results.push(false);
+                        details.push(false);
                     } catch (e) {
-                        results.push(true);
+                        details.push(true);
                     }
                 },
                 // opposite of throws
                 works(fn) {
                     try {
                         fn();
-                        results.push(true);
+                        details.push(true);
                     } catch (e) {
-                        results.push(false);
+                        details.push(false);
                     }
                 },
                 async(promise) {
@@ -125,18 +143,21 @@ const chalk = require('chalk');
             let asyncTest = null;
 
             try {
-                vm.runInNewContext(code, context);
-                ran = true;
+                if (typeof code === 'function') {
+                    code(context);
+                } else {
+                    vm.runInNewContext(code, context);
+                }
                 
                 if (asyncTest) {
                     asyncTest.then((error) => {
-                        done({results, error});
+                        done({details, error});
                     });
                 } else {
-                    done({results, error: null});
+                    done({details, error: null});
                 }
             } catch (error) {
-                done({results, error});
+                done({details, error});
             }        
         });
     }
@@ -150,18 +171,63 @@ const chalk = require('chalk');
         }
     }
 
+    const tabulate = (title, tests, details = [], message = '') => {
+        const explicitPad = {
+            'run': 7
+        }
+
+        const trace =
+          preliminaryTitles
+            .map((name) => tests[name])
+            .map(b => b ? winSymbol : failSymbol)
+            .map((symbol, i) => {
+                const name  = preliminaryTitles[i];
+
+                if (explicitPad.hasOwnProperty(name)) {
+                    return symbol + pad('', explicitPad[name]);
+                } else {
+                    return symbol + pad('', name.length - 1);
+                }
+            })
+            .join('   ');
+        
+        const detailString =
+          details
+            .map((bool) => bool ? chalk.green('\u2713') : chalk.red('\u2715'))
+            .join('');
+
+        const messageString =
+          (details.length > 0) ?
+            ` ${message}` :
+            message;
+        
+        console.log(`${pad(i, 4)} ${pad(title, 40)} | ${trace} ${detailString}${messageString}`);
+        i++;
+    }
+
     let i = 0;
     const preliminaryTitles = [
         'lex',
         'parse',
         'transform',
-        'generate'
+        'generate',
+        'run'
     ];
 
-    console.log(`${pad('#', 4)} ${pad('title', 40)} | ${preliminaryTitles.join(' > ')} > ${pad('run', 8)} details`);
+    console.log([
+        `${pad('#', 4)} ${pad('title', 40)}`,
+        `${preliminaryTitles.slice(0, 4).join(' > ')} > ${pad(preliminaryTitles[4], 8)} details`
+    ].join(' | '));
 
-    for (const {title, file, code} of getTests()) {
-        const preliminary = [
+    /*
+    for (const {title, file, test} of getCompileTests()) {
+
+    }
+    */
+
+    for (const {title, file, code, run} of getTests()) {
+        const results = preliminaryTitles.reduce((obj, key) => (obj[key] = false, obj), {});
+        const tests = [
             () => {
                 for (const token of tokenize(code)) {
                     // console.log(token.type, token.value);
@@ -171,44 +237,39 @@ const chalk = require('chalk');
             () => compileToAST(code, {type: 'module'}),
             () => compile(code, {type: 'module'})
         ]
-        .map(fn => tryOut(fn));
-        
-        
-        const trace =
-          preliminary
-            .map(b => !b ? winSymbol : failSymbol)
-            .map((symbol, i) => symbol + pad('', preliminaryTitles[i].length - 1))
-            .join('   ');
-        
-        if (preliminary[preliminary.length - 1] === null) {
-            const generated = compile(code, 'module');
-            const {results, error} = await runtimeTest(generated);
-            const status =
-              results
-                .map(b => b ? 1 : 0)
-                .reduce((sum, val) => sum + val, 0)
-            const symbol = (!error && status === results.length) ? winSymbol : failSymbol;
 
-            let details =
-              results
-                .map(b => b ? chalk.green('\u2713') : chalk.red('\u2715'))
-                .join('');
+        let error = null, index = 0;
 
-            if (error)
-                details += ` (${error.message})`;
-            console.log(`${pad(i, 4)} ${pad(title, 40)} | ${trace}   ${symbol}${pad('', 7)} ${details}`);
+        for (const testFn of tests) {
+            const err = tryOut(testFn);
+            const key = preliminaryTitles[index];
+
+            if (err) {
+                error = err;
+                break;
+            } else {
+                results[key] = !err;
+            }
+
+            index++;
+        }
+                
+        if (results.generate) {
+            const {details, error} = await runtimeTest(run ? run : compile(code, 'module'));
+
+            results.run = !(error || details.includes(false));
+
+            tabulate(title, results, details, error ? error.message : '');
+            // console.log(`${pad(i, 4)} ${pad(title, 40)} | ${trace}   ${symbol}${pad('', 7)} ${details}`);
         
-            if (error || status < results.length)
-                console.log(generated);
-
         } else {
-            const [err] = preliminary.filter(e => !!e);
-            let msg = err.message;
+            let msg = error.message;
 
-            if (err.hasOwnProperty('loc'))
-                msg += ` @ ${err.loc.start.line - 1}:${err.loc.start.column}`;
+            if (error.hasOwnProperty('loc'))
+                msg += ` @ ${error.loc.start.line - 1}:${error.loc.start.column}`;
             
-            console.log(`${pad(i, 4)} ${pad(title, 40)} | ${trace}   ${failSymbol}${pad('', 7)} ${msg}`);
+            tabulate(title, results, [], msg);
+            // console.log(`${pad(i, 4)} ${pad(title, 40)} | ${trace}   ${failSymbol}${pad('', 7)} ${msg}`);
             
             /*
             for (const token of tokenize(code)) {
@@ -223,9 +284,6 @@ const chalk = require('chalk');
                 }
             }
             */
-        }
-        
-        i++;
+        }        
     }
 })();
-
