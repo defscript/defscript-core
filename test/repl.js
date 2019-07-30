@@ -57,7 +57,7 @@ import("../lib/")
             parse(text, expression = true) {
                 code = text;
                 const type = expression ? 'expression' : 'module';
-                const ast = parse(text, type);
+                const ast = parse(text, {type});
 
                 console.log(JSON.stringify(ast, null, 4));
                 console.log();
@@ -67,11 +67,11 @@ import("../lib/")
                 const type = expression ? 'expression' : 'module';
 
                 if (toAST) {
-                    const ast = compileAST(text, type);
+                    const ast = compileAST(text, {type});
                     
                     console.log(JSON.stringify(ast, null, 4));
                 } else {
-                    console.log(compile(text, type));
+                    console.log(compile(text, {type}));
                 }
                 
                 console.log();

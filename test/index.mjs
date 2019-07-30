@@ -33,8 +33,8 @@ const __dirname = path.dirname(__filename);
         for (const {title, code, run} of compileTests) {
             yield {
                 title,
-                run,
                 code,
+                run: run ? run : (() => {}),
                 file: 'compile-only'
             }
         }
@@ -205,7 +205,6 @@ const __dirname = path.dirname(__filename);
         i++;
     }
 
-    let i = 0;
     const preliminaryTitles = [
         'lex',
         'parse',
@@ -213,6 +212,8 @@ const __dirname = path.dirname(__filename);
         'generate',
         'run'
     ];
+
+    let i = 0;
 
     console.log([
         `${pad('#', 4)} ${pad('title', 40)}`,

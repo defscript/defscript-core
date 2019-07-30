@@ -14,7 +14,8 @@ module
     > @multiple(module-line, sep)    =>
         new @node.Program do
             sourceType: 'module'
-            body: $[0]
+            body: $[0],
+            loc: @rootLoc
 
 identifier
     > \id   => new @node.Identifier(name: $[0])
