@@ -236,7 +236,13 @@ const __dirname = path.dirname(__filename);
             },
             () => parse(code, {type: 'module'}),
             () => compileToAST(code, {type: 'module'}),
-            () => compile(code, {type: 'module'})
+            () => compile(code, {
+                type: 'module',
+                map: {
+                    source: file,
+                    root: 'https://fakedomain.com/fake-path/'
+                }
+            })
         ]
 
         let error = null, index = 0;
