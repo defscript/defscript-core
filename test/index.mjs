@@ -236,13 +236,19 @@ const __dirname = path.dirname(__filename);
             },
             () => parse(code, {type: 'module'}),
             () => compileToAST(code, {type: 'module'}),
-            () => compile(code, {
-                type: 'module',
-                map: {
-                    source: file,
-                    root: 'https://fakedomain.com/fake-path/'
+            () => {
+                const generated = compile(code, {
+                    type: 'module',
+                    map: {
+                        source: file,
+                        root: 'https://fakedomain.com/fake-path/'
+                    }
+                });
+
+                if (!generated.map || !generated.code) {
+                    throw new Error("Bad source map settings");
                 }
-            })
+            }
         ]
 
         let error = null, index = 0;
