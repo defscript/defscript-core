@@ -231,7 +231,7 @@ const __dirname = path.dirname(__filename);
         const tests = [
             () => {
                 for (const token of tokenize(code)) {
-                    // console.log(token.type, token.value);
+                    // console.log(token.type, token.value, token.range);
                 }
             },
             () => parse(code, {type: 'module'}),

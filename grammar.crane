@@ -26,7 +26,31 @@ literal
     > \true         => @literal true
     > \false        => @literal false
     > \number       => @literal parseFloat $[0]
-    > \string       => @literal $[0].slice 1, -1
+
+string
+
+    single
+        > \simple-string    => @literal @escapade $[0]
+
+
+    double
+        component
+            # interpolation
+            > '{' e '}'    =>
+                new @node.StringInterpolation do
+                    argument: $[1]
+
+            # raw string
+            > \string-literal   =>
+                new @node.StringLiteral do
+                    value: @escapade($[0], true)
+
+        > '"' @multiple(component) '"'  =>
+            new @node.StringExpression do
+                parts: $[1]
+
+    > single
+    > double
 
 sep
     > ','
@@ -173,6 +197,7 @@ e
     > array
     > object
     > literal
+    > string
     > identifier
     > member-access
     > compare-chain
@@ -294,7 +319,7 @@ assignee
 
 module-declaration
     source
-        > \string => @literal $[0].slice 1, -1
+        > string.single
 
     import-declaration
         namespace-specifier
