@@ -1,24 +1,32 @@
 
 e
-    callee
-        > \id
-        > '+'
-        > '-
-        > '*'
-        > '/'
+    call
+        callee
+            > \id
+            > '+'
+            > '-
+            > '*'
+            > '/'
+
+        > callee =>
+            {
+                type: 'call'
+                callee: $[0]
+                arguments: []
+            }
+        
+        > call e =>
+            {
+                ...$[0],
+                arguments: [...$[0].arguments, $[1]]
+            }
 
     interpolation
-        > '{' code '}'  =>
+        > '{' \code '}'  =>
             {
                 type: 'interpolation'
                 tree: @parse($[1])
             }
 
-    > call  =>
-        {
-            type: 'call'
-            subject
-        }
-
     > interpolation
-    > 
+    > call

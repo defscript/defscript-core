@@ -3,9 +3,107 @@ import vm from "vm"
 import fs from "fs"
 import path from "path"
 import chalk from "chalk"
-import {tokenize, parse, compileToAST, compile} from "../lib"
+import {tokenize, parse, compileToAST, compile,
+    EmbeddedLanguage, fetchInterpolation} from "../lib"
+
+import * as crane from "crane-parser";
 
 import compileTests from "./compile-only"
+
+const mathLang = {
+    lexer: new crane.Lexer([
+        {
+            type: 'int',
+            regex: /[0-9]+/
+        },
+        {
+            type: 'bin-op',
+            regex: /[-+\*\/]/
+        },
+        {
+            regex: /\(\)/
+        },
+        {
+            type: 'ws',
+            regex: /\s+/
+        },
+        {
+            type: 'code',
+            regex: /\{/,
+            fetch(api) {
+                const interpolation = fetchInterpolation(api.input, api.position);
+
+                api.advanceTo(api.position + interpolation.length + 1);
+
+                return interpolation;
+            }
+        }
+    ]),
+
+    Parser:
+      crane
+        .compile(`
+            e
+                > \\int     => {type: 'int', string: $[0].value}
+
+                > e \\bin-op e =>
+                    {
+                        type: 'binary-expression'
+                        left: $[0]
+                        right: $[2]
+                        operator: $[1].value
+                    }
+
+
+                > \\code =>
+                    {
+                        type: 'embedded-code'
+                        string: $[0].value
+                        ast: @parseEmbedded($[0].value)
+                    }
+
+                > '(' e ')' => $[1]
+        `)
+        .cook()
+        .generateParser()
+}
+
+class DSEmbeddedMath extends EmbeddedLanguage {
+    compile(string) {
+        const tokenTranslator = (a) => a;
+        const context = {
+            parseEmbedded(expression) {
+
+                return parse(expression, {type: 'expression'});
+            }
+        };
+        const parsing = new mathLang.Parser({context, tokenTranslator});
+
+        for (const token of mathLang.lexer.tokenize(string)) {
+            if (token.type !== 'ws') {
+                parsing.push(token);
+            }
+        }
+
+        return parsing.finish();
+    }
+
+    transform(node, transformer) {
+
+        switch (node.type) {
+            case 'int':
+                return new this.es.Literal({value: parseInt(node.string)});
+            case 'binary-expression':
+                return new this.es.BinaryExpression({
+                    left: this.transform(node.left, transformer),
+                    right: this.transform(node.right, transformer),
+                    operator: node.operator
+                });
+            case 'embedded-code':
+                return transformer.transform(node.ast);
+        }
+    }
+}
 
 const __url = import.meta.url
 const __filename =
@@ -157,6 +255,8 @@ const __dirname = path.dirname(__filename);
                     done({details, error: null});
                 }
             } catch (error) {
+                console.log(error);
+
                 done({details, error});
             }        
         });
@@ -205,6 +305,10 @@ const __dirname = path.dirname(__filename);
         i++;
     }
 
+    const embedded = {
+        math: DSEmbeddedMath
+    }
+
     const preliminaryTitles = [
         'lex',
         'parse',
@@ -235,15 +339,23 @@ const __dirname = path.dirname(__filename);
                 }
             },
             () => parse(code, {type: 'module'}),
-            () => compileToAST(code, {type: 'module'}),
+            () => {
+                const ast = compileToAST(code, {type: 'module', embedded});
+
+                if (file.includes('embedded')) {
+                    //console.log('asssss', JSON.stringify(ast, null, 2));
+                }
+            },
             () => {
                 const generated = compile(code, {
                     type: 'module',
+                    embedded,
                     map: {
                         source: file,
                         root: 'https://fakedomain.com/fake-path/'
                     }
                 });
+
 
                 if (!generated.map || !generated.code) {
                     throw new Error("Bad source map settings");
@@ -268,7 +380,12 @@ const __dirname = path.dirname(__filename);
         }
                 
         if (results.generate) {
-            const {details, error} = await runtimeTest(run ? run : compile(code, 'module'));
+            const compiled = run ? run : compile(code, {
+                embedded,
+                type: 'module'
+            });
+
+            const {details, error} = await runtimeTest(compiled);
 
             results.run = !(error || details.includes(false));
 

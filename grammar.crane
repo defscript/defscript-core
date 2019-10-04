@@ -149,6 +149,13 @@ e
             
         > '{' @multiple(property, sep) '}'      => new @node.ObjectExpression properties: $[1]
 
+    embedded-expression
+        embedded
+            > \embedded-ml
+            > \embedded-sl
+
+        > embedded  => @embedded($[0])
+
     compare-chain
         > e \compare e =>
             new @node.CompareChainExpression do
@@ -202,6 +209,7 @@ e
     > member-access
     > compare-chain
     > call-expression
+    > embedded-expression
 
     > \await e =>
         new @node.AwaitExpression do
