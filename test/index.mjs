@@ -69,7 +69,7 @@ const mathLang = {
 }
 
 class DSEmbeddedMath extends EmbeddedLanguage {
-    compile(string) {
+    parse(string) {
         const tokenTranslator = (a) => a;
         const context = {
             parseEmbedded(expression) {
