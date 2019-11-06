@@ -1,7 +1,7 @@
 {
   "name": "defscript-core",
   "type": "module",
-  "version": "0.0.9",
+  "version": "0.1.0",
   "description": "A simple, solid compile-to-js language with a extension API",
   "main": "./lib/index.mjs",
   "directories": {
@@ -31,6 +31,7 @@
   "homepage": "https://github.com/defscript/defscript-core#readme",
   "dependencies": {
     "crane-parser": "^0.2.0",
+    "esm": "^3.2.25",
     "estemplate": "^0.5.1",
     "lexie": "^1.0.6"
   },
