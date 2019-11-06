@@ -92,5 +92,12 @@ export default [
         run(api) {
             
         }
+    },
+    {
+        title: "Export default declaration",
+        code: `export default slave`,
+        run(api) {
+            
+        }
     }
 ]
