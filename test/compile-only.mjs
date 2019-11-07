@@ -99,5 +99,23 @@ export default [
         run(api) {
             
         }
+    },
+    {
+        title: "Real-world use",
+        code: `
+            import App from 'module-name'
+
+            def app = new App({
+                target: document.body
+                props: {
+                    name: 'world'
+                }
+            })
+
+            export default app
+        `,
+        run(api) {
+            
+        }
     }
 ]

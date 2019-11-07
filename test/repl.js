@@ -1,8 +1,8 @@
 
-const livescript = require("livescript");
-const readline = require("readline");
-const fs = require("fs");
-const vm = require("vm");
+import livescript from "livescript"
+import readline from "readline"
+import fs from "fs"
+import vm from "vm"
 
 import("../lib/")
     .then(({parse, compileAST, compile, tokenize}) => {

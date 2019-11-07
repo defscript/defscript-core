@@ -1,9 +1,10 @@
-
+%none \not
+%left 'and' 'or'
 %left \compare
-%left \logical
 %left \linear
 %left \scalar
 %right \pow
+%none '!'
 %none '{' '(' '[' ']' ')' '}' '.'
 
 module
@@ -193,8 +194,9 @@ e
 
     > e \scalar e       => @binaryExpression($)
     > e \linear e       => @binaryExpression($)
-    > e \pow e          => @binaryExpression($)
-    > e \logical e      => @binaryExpression($)
+    > e 'pow' e         => @binaryExpression($)
+    > e 'and' e         => @binaryExpression($)
+    > e 'or' e          => @binaryExpression($)
     > \linear e         => @unaryExpression($)
     > \! e              => @unaryExpression($)
     > \not e            => @unaryExpression($)
@@ -649,6 +651,11 @@ statement
 
         > return-statement
         > yield-statement
+
+        > \throw e =>
+            new @node.ThrowStatement do
+                argument: $[1]
+
 
         > \break =>
             new @node.BreakStatement do
