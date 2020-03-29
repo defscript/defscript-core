@@ -3,12 +3,12 @@ import vm from "vm"
 import fs from "fs"
 import path from "path"
 import chalk from "chalk"
-import {tokenize, parse, compileToAST, compile,
-    EmbeddedLanguage, fetchInterpolation} from "../lib"
-
 import * as crane from "crane-parser";
 
-import compileTests from "./compile-only"
+import {tokenize, parse, compileToAST, compile,
+    EmbeddedLanguage, fetchInterpolation} from "../lib/index.js"
+
+import compileTests from "./compile-only.js"
 
 const mathLang = {
     lexer: new crane.Lexer([
@@ -339,13 +339,7 @@ const __dirname = path.dirname(__filename);
                 }
             },
             () => parse(code, {type: 'module'}),
-            () => {
-                const ast = compileToAST(code, {type: 'module', embedded});
-
-                if (file.includes('embedded')) {
-                    //console.log('asssss', JSON.stringify(ast, null, 2));
-                }
-            },
+            () => compileToAST(code, {type: 'module', embedded}),
             () => {
                 const generated = compile(code, {
                     type: 'module',

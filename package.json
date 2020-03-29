@@ -1,18 +1,19 @@
 {
   "name": "defscript-core",
   "type": "module",
-  "version": "0.1.3",
+  "version": "0.1.4",
   "description": "A simple, solid compile-to-js language with a extension API",
-  "main": "./lib/index.mjs",
+  "main": "./lib/index.js",
   "directories": {
     "lib": "lib"
   },
   "scripts": {
-    "test": "npm run build-parser && npm run test-light",
-    "test-light": "node --experimental-modules --es-module-specifier-resolution=node test/index.mjs",
-    "repl": "node --experimental-modules --es-module-specifier-resolution=node test/repl.js",
-    "install": "npm run build-parser",
-    "build-parser": "crane grammar.crane -r module > lib/parser.out.mjs"
+    "start": "node start.js",
+    "test": "npm start test",
+    "test-light": "npm start test-light",
+    "repl": "npm start repl",
+    "postinstall": "npm start postinstall",
+    "build-parser": "npm start parsers"
   },
   "repository": {
     "type": "git",
@@ -33,7 +34,8 @@
     "crane-parser": "^0.2.1",
     "esm": "^3.2.25",
     "estemplate": "^0.5.1",
-    "lexie": "^1.0.6"
+    "jolt.sh": "^1.0.2",
+    "lexie": "1.0.6"
   },
   "devDependencies": {
     "chalk": "^2.4.1",

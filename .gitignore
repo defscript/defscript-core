@@ -1,4 +1,5 @@
 
 node_modules
 package-lock.json
-lib/parser.out.mjs
+lib/parser.out.js
+lib/expression-parser.out.js

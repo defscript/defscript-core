@@ -1,7 +1,8 @@
 
-import {EmbeddedLanguage} from "../../lib/embedded"
-import {Parser} from "./lispy-parser.out"
 import Lexer from "lexie"
+
+import {EmbeddedLanguage} from "../../lib/embedded.js"
+import {Parser} from "./lispy-parser.out.js"
 
 const lexer = new Lexer([
     {

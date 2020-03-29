@@ -2,4 +2,4 @@
 
 require = require('esm')(module);
 
-module.exports = require('./lib/index.mjs');
+module.exports = require('./lib/index.js');
