@@ -88,7 +88,7 @@ export default [
     },
     {
         title: "Export class declaration",
-        code: `export def class MyClass : YourClass {}`,
+        code: `export def class MyClass < YourClass {}`,
         run(api) {
             
         }

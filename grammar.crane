@@ -99,8 +99,14 @@ e
             > e
             > splat
         
+        indented-list
+            
+            > component                     => [$[0]]
+            > indented-list \nl component   => [...$[0], $[2]]
+
         > '[' @multiple(component, sep) ']'     => new @node.ArrayExpression elements: $[1]
-    
+        > '*' \indent indented-list \dedent     => new @node.ArrayExpression elements: $[2]
+
     object
         property
             > splat
@@ -147,8 +153,14 @@ e
                     id: $[1]
                     definition: $[2]
                     kind: 'set'
+
+        indented-list
             
+            > property                     => [$[0]]
+            > indented-list \nl property   => [...$[0], $[2]]
+
         > '{' @multiple(property, sep) '}'      => new @node.ObjectExpression properties: $[1]
+        > '**' \indent indented-list \dedent    => new @node.ObjectExpression properties: $[2]
 
     embedded-expression
         embedded
@@ -169,28 +181,50 @@ e
                 expressions: [...$[0].expressions, $[2]]
 
     call-expression
-        arguments
-            argument
-                > e
-                > splat
 
+        argument
+            > e
+            > splat
+        
+        arguments
             > @multiple(argument, ',')
 
-        # call expression
-        > e '(' arguments ')'    =>
-            new @node.CallExpression do
-                callee: $[0]
-                arguments: $[2]
+        traditional
 
-        > \new identifier '(' arguments ')' =>
-            new @node.NewExpression do
-                callee: $[1]
-                arguments: $[3]
+            # call expression
+            > e '(' arguments ')'    =>
+                new @node.CallExpression do
+                    callee: $[0]
+                    arguments: $[2]
 
-        > \new member-access '(' arguments ')' =>
-            new @node.NewExpression do
-                callee: $[1]
-                arguments: $[3]
+
+        constructor
+            > \new identifier '(' arguments ')' =>
+                new @node.NewExpression do
+                    callee: $[1]
+                    arguments: $[3]
+
+            > \new member-access '(' arguments ')' =>
+                new @node.NewExpression do
+                    callee: $[1]
+                    arguments: $[3]
+
+        lite
+            lite-args
+            
+                > argument                  => [$[0]]
+                > lite-args ',' argument    => [...$[0], $[2]]
+                > lite-args argument        => [...$[0], $[1]]
+
+            # call expression
+            > e '`' lite-args =>
+                new @node.CallExpression do
+                    callee: $[0]
+                    arguments: $[2]
+
+        > traditional
+        > constructor
+        > lite
 
     > e \scalar e       => @binaryExpression($)
     > e \linear e       => @binaryExpression($)
@@ -477,7 +511,7 @@ class
                 superClass: null
                 body: $[4]
 
-        > \def \class identifier ':' e '{' class-body '}'   =>
+        > \def \class identifier '<' e '{' class-body '}'   =>
             new @node.ClassDeclaration do
                 id: $[2]
                 superClass: $[4]
@@ -490,7 +524,7 @@ class
                 superClass: null
                 body: $[2]
 
-        > \class ':' e '{' class-body '}'   =>
+        > \class '<' e '{' class-body '}'   =>
             new @node.ClassExpression do
                 id: null
                 superClass: $[2]
